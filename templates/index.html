@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Traffic Signal Control</title>
+    <script>
+        async function fetchTrafficData() {
+            try {
+                const response = await fetch('/traffic-data');
+                const data = await response.json();
+                console.log("Traffic Data:", data); // Debugging response in the browser console
+                
+                // Update car counts
+                const counts = data.prioritized_sequence.reduce((acc, item) => {
+                    acc[item.side] = item.car_count;
+                    return acc;
+                }, {});
+
+                document.getElementById('north').innerText = counts.North || 0;
+                document.getElementById('south').innerText = counts.South || 0;
+                document.getElementById('east').innerText = counts.East || 0;
+                document.getElementById('west').innerText = counts.West || 0;
+                document.getElementById('total').innerText = data.Total; // Update total count
+
+                // Update prioritization table
+                const tableBody = document.getElementById('priority-table-body');
+                tableBody.innerHTML = ""; // Clear previous entries
+                data.prioritized_sequence.forEach((entry, index) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${index + 1}</td>
+                        <td>${entry.side}</td>
+                        <td>${entry.car_count}</td>
+                        <td>${entry.signal_time} seconds</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+            } catch (error) {
+                console.error("Error fetching traffic data:", error);
+            }
+        }
+
+        // Fetch the traffic data every second
+        setInterval(fetchTrafficData, 1000);
+    </script>
+
+    <style>
+        /* Same styling as before */
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #f0f0f0;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #007bff;
+        }
+
+        div {
+            margin: 20px auto;
+            padding: 20px;
+            max-width: 600px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        p, table {
+            font-size: 18px;
+            margin: 10px 0;
+            width: 100%;
+        }
+
+        table {
+            border-collapse: collapse;
+        }
+
+        table th, table td {
+            border: 1px solid #ccc;
+            padding: 8px;
+        }
+
+        table th {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #video-feed {
+            width: 100%;
+            max-width: 640px;
+            height: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Smart Traffic Signal Control</h1>
+    
+    <!-- Display traffic data -->
+    <div>
+        <h2>Traffic Data</h2>
+        <p>North: <span id="north">0</span></p>
+        <p>South: <span id="south">0</span></p>
+        <p>East: <span id="east">0</span></p>
+        <p>West: <span id="west">0</span></p>
+        <p>Total: <span id="total">0</span></p>
+    </div>
+
+    <!-- Prioritization table -->
+    <div>
+        <h2>Prioritization</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Direction</th>
+                    <th>Car Count</th>
+                    <th>Signal Time</th>
+                </tr>
+            </thead>
+            <tbody id="priority-table-body">
+                <!-- Prioritization data will be dynamically added here -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Display traffic video feed -->
+    <div id="video-feed-container">
+        <h2>Traffic Camera Feed</h2>
+        <img id="video-feed" src="{{ url_for('video_feed') }}" alt="Traffic Video Feed" />
+    </div>
+</body>
+</html>
